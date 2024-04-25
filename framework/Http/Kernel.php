@@ -12,16 +12,12 @@ class Kernel
     {
 
         $dispatcher = simpleDispatcher(function (RouteCollector $collector) {
-            $collector->get('/', function () {
-                $content = '<h1>Hello world!!!</h1>';
+            $routes = include BASE_PATH.'/routes/web.php';
 
-                return new Response($content);
-            });
-            $collector->get('/posts/{id}', function (array $vars) {
-                $content = "<h1>Post - {$vars['id']}</h1>";
+            foreach ($routes as $route) {
+                $collector->addRoute(...$route);
+            }
 
-                return new Response($content);
-            });
         });
 
         $routeInfo = $dispatcher->dispatch(
@@ -29,8 +25,10 @@ class Kernel
             $reqeust->getPath(),
         );
 
-        [$status, $handler, $vars] = $routeInfo;
+        [$status, [$controller, $method], $vars] = $routeInfo;
 
-        return $handler($vars);
+        $response = call_user_func_array([new $controller, $method], $vars);
+
+        return $response;
     }
 }
